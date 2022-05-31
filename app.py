@@ -1,14 +1,21 @@
+import jsonschema
 import sqlalchemy
 from flask import Flask, jsonify, request
+from flask_expects_json import expects_json
+from jsonschema import ValidationError
 
-import helpers
 from DB.Models.User import User
 from config import app, db
+from validate_json import validate_create_user_json, validate_change_user_info
 
 
 @app.route("/api/contacts/<CONTACT_ID>", methods=["PUT"])
+@expects_json(validate_change_user_info)
 def put_user(CONTACT_ID):
-    user = User.query.filter_by(id=int(CONTACT_ID)).update(request.json)
+    user = User.query.filter_by(id=int(CONTACT_ID)).first()
+    if user is None:
+        return jsonify({"ERROR": f"User with id: {CONTACT_ID} is not exists"})
+    User.query.filter_by(id=int(CONTACT_ID)).update(request.json)
     db.session.commit()
     return jsonify({"MESSAGE": f"User with id: {CONTACT_ID} is changed"})
 
@@ -24,21 +31,16 @@ def delete_user(CONTACT_ID):
         return jsonify({"ERROR": f"User with id: {CONTACT_ID} is not exists"})
 
 
+@app.errorhandler(400)
+def validation_error(error):
+    return jsonify({"ERROR": f"ValidationError {error.description}"})
+
+
 @app.route("/api/contacts", methods=["POST"])
+@expects_json(validate_create_user_json)
 def create_user():
-    first_name = request.json.get("first_name")
     email = request.json.get("email")
-    if not helpers.is_required_field(first_name):
-        return jsonify({"ERROR": "first_name field is required"})
-    if not helpers.is_required_field(email):
-        return jsonify({"ERROR": "email field is required"})
-    last_name = request.json.get("last_name")
-    phone = request.json.get("phone")
-    country = request.json.get("country")
-    city = request.json.get("city")
-    address = request.json.get("address")
-    user = User(email=email, first_name=first_name, last_name=last_name, phone=phone, country=country, city=city,
-                address=address)
+    user = User(**request.json)
     try:
         db.session.add(user)
         db.session.commit()
@@ -46,7 +48,6 @@ def create_user():
     except sqlalchemy.exc.IntegrityError:
         db.session.rollback()
         user = User.query.filter_by(email=email).first()
-        print(user)
         return jsonify({"ERROR": f"User: {user} is not created, because user has already been created"})
 
 
@@ -68,4 +69,4 @@ def get_contacts():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(в)
