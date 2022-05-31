@@ -3,6 +3,7 @@ import sqlalchemy
 from flask import Flask, jsonify, request
 from flask_expects_json import expects_json
 from jsonschema import ValidationError
+import socket
 
 from DB.Models.User import User
 from config import app, db
@@ -69,4 +70,4 @@ def get_contacts():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host="0.0.0.0")
