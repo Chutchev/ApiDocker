@@ -71,7 +71,7 @@ Python 3.7+.
 }
 ```
 4. DELETE /api/contact/{CONTACT_ID} - удаление контакта
-4. PUT /api/contact/{CONTACT_ID} - изменение данных контакта
+5. PUT /api/contact/{CONTACT_ID} - изменение данных контакта
 ```JSON
 
 {
